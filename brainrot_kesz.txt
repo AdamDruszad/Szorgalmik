@@ -1,0 +1,36 @@
+
+01
+Melyik karakter vagyok? — Kódrészlet azonosítás
+
+Minden kódrészlethez írd be a megfelelő karakter nevét!
+int x = 10; 	→ 	Változó Vlad
+int* p = &x; 	→ 	Pointer Pete
+void f(int x) { x=99; } 	→ 	Xerox Chad
+void f(int& x) { x=99; } 	→ 	Key Dealer Kevin
+int* p = nullptr; 	→ 	Null Nick
+{ int n=5; } // n meghal 	→ 	Scope Sensei
+template<T> T add(T a, T b) 	→ 	Generic Greg
+return n * f(n-1); 	→	Recursion Rick
+
+
+02
+Töltsd ki a hiányzó részeket!
+
+a) Xerox Chad — érték szerinti átadás: az eredeti nem változik.
+void valtoztat(int x) { x = 999; } int chad = 1; valtoztat(chad); // chad értéke még mindig: 1
+
+b) Pointer Pete — dereferencelés: mi lesz a kimenet?
+int ertek = 55; int* pete = &ertek; *pete = 77; printf("%d", ertek); // kimenet: 77
+
+c) Recursion Rick — add meg a base case-t!
+int osszeg(int n) { if (n == 0) return n; // base case return n + osszeg(n - 1); } // osszeg(4) = 4+3+2+1+0 = 10
+
+
+03
+Melyik Boss Karakter jelenik meg? — Hibák azonosítása
+
+Minden kódrészletnél írd be, hogy melyik Boss jelenik meg és miért!
+// a) Mi a baj? int* p = nullptr; printf("%d", *p); 	----→	Segfault Samu fog megjelenni, mivel a pointerünk null, vagyis nem kapot memóriacímet és mi a semmit akarjuk elérni, amikor kibontjuk a p-t
+// b) Mi a baj? int* p = (int*)malloc(sizeof(int)); *p = 42; // ... free() soha nem hívódik	----→	Memory Leak Miki, mivel a malloc fv. által lefoglalt memóriét sosem szabadítjuk fel a free() fv.-vel
+// c) Mi a baj? int vegtelen(int n) { return vegtelen(n); // base case? } 	----→	 STACK OVERFLOW STAN mivel egy végtelen ciklusban akadtunk
+
