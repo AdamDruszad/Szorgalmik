@@ -1,0 +1,98 @@
+
+01
+Melyik karakter vagyok? — Kódrészlet → Fogalom párosítás
+
+Minden kódrészlethez írd be a megfelelő fogalom nevét (és a karakter nevét ha emlékszel)!
+Kódrészlet		|		Fogalom / Karakter
+class Kutya { ... }; 	→ 	Osztály Olga
+Kutya k("Rex"); 	→ 	Objektum Oszkár
+Kutya(string n) { nev=n; } 	→ 	Konstruktor Kristóf
+~Kutya() { delete adat; } 	→ 	Destruktor Dezső
+class Kutya : public Allat 	→ 	Öröklődő Olivér
+virtual void hangotAd() = 0; 	→ 	Absztrakt Anikó
+void f() override { ... } 	→ 	Polimorf Péter
+private: int egyenleg; 	→ 	Bezáró Bence
+Allat* a = new Kutya();
+a->hangotAd(); // futáskor dől el 	→ 	Late Binding Lajos
+
+
+02
+Töltsd ki a hiányzó részeket!
+
+a) Konstruktor Kristóf és Destruktor Dezső — add hozzá őket az osztályhoz!
+class Auto { public: std::string marka; int* ev; // konstruktor (inicializálja marka-t és foglalja le az ev-et heap-en): 
+Auto(std::string m) { marka = m; ev = new int(2024); } // destruktor (szabadítsa fel ev-et): ~Auto() { delete ev; } };
+
+b) Bezáró Bence — javítsd ki a hozzáférési hibákat!
+class BankSzamla { int egyenleg = 0; // Belülről látszik, kívülről nem → private int hitelkeret = 50000; // Leszármazott is látja, kívülső nem → protected void befizet(int x); // Mindenki hívhatja → public };
+
+c) Polimorf Péter — mi a kimenet?
+Allat* allatok[] = { new Kutya(), new Macska(), new Kutya() }; for (auto* a : allatok) a->hangotAd(); // Kimenetek sorban: Vau, Miau, Vau
+
+
+03
+Absztrakt Anikó vs Interfész István — mi a különbség?
+
+Nézd meg a két osztályt. Melyik az absztrakt osztály, melyik az interfész? Indokold egy mondatban, és jelöld meg, mi teszi azzá!
+// X osztály: class X { public: virtual void mozog() = 0; virtual void megall() = 0; virtual ~X() = default; }; // Y osztály: class Y { public: virtual void mozog() = 0; void legzik() { /* van impl. */ } int energia = 100; };
+
+X = Interfész István    mert: Kizárólag "pure virtual" (tisztán virtuális) metódusai vannak, semmi konkrét megvalósítás vagy adat. Ő csak egy szerződés.
+
+Y = Absztrakt Anikó    mert: Bár van egy "pure virtual" metódusa (mozog()), de mellette tartalmaz egy konkrétan megírt függvényt (legzik()) és egy tagváltozót is (energia).
+
+
+04
+Early Eddie vs Late Binding Lajos — mikor melyik?
+
+Minden sorhoz írd be: EARLY (fordítási idő) vagy LATE (futási idő)?
+Szituáció			|			EARLY / LATE
+Kutya k; k.ugat(); (ugat nem virtual) 	→	EARLY
+Allat* a = new Kutya(); a->hangotAd(); (virtual) 	→	LATE
+osszeAdd<int>(3,4); (template) 	→	EARLY
+Függvény overloading (f(int) vs f(double)) 	→	EARLY
+virtual void f() = 0; leszármazotton hívva 	→	LATE
+
+
+05
+Tervezz egy mini osztályhierarchiát!
+
+Tervezz egy 3 szintű öröklési hierarchiát a karakterek alapján! (pl. Jármű → Motoros jármű → Autó) Jelöld meg: melyik absztrakt, melyik konkrét, milyen metódusok virtual-ok, és mi public / protected / private. 
+
+
+#include <iostream>
+#include <string>
+
+class Jarmu {
+protected:
+    int vegsebesseg;
+public:
+    Jarmu(int v) : vegsebesseg(v) {}
+    virtual ~Jarmu() = default;      
+    virtual void indit() = 0; 
+};
+
+class Auto : public Jarmu {
+private:
+    int kerekekSzama; 
+public:
+    Auto(int v) : Jarmu(v), kerekekSzama(4) {}
+
+    void indit() override {
+        std::cout << "Az auto motorja beindult." << std::endl;
+    }
+    
+    virtual void driftel() {
+        std::cout << "Az auto probal driftelni..." << std::endl;
+    }
+};
+
+class BMW_M4 : public Auto {
+private:
+    std::string motorTipus;
+public:
+    BMW_M4() : Auto(290), motorTipus("S58 Twin-Turbo") {}
+
+    void driftel() override {
+        std::cout << "A BMW M4 (" << motorTipus << ") tokeletesen keresztbe all a kanyarban!" << std::endl;
+    }
+};
