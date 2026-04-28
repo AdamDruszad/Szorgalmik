@@ -1,156 +1,237 @@
-import os, streams, math, strutils
+package main
 
-type
-  Csomopont = ref object
-    betu: char
-    balNulla: Csomopont
-    jobbEgy: Csomopont
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"math"
+	"os"
+	"strings"
+)
 
-  LZWBinFa = ref object
-    gyoker: Csomopont
-    fa: Csomopont
-    melyseg, maxMelyseg, atlagosszeg, atlagdb: int
-    atlag, szorasosszeg, szoras: float
+type Csomopont struct {
+	betu     byte
+	balNulla *Csomopont
+	jobbEgy  *Csomopont
+}
 
-proc ujCsomopont(b: char = '/'): Csomopont =
-  new(result)
-  result.betu = b
-  result.balNulla = nil
-  result.jobbEgy = nil
 
-proc ujLZWBinFa(): LZWBinFa =
-  new(result)
-  result.gyoker = ujCsomopont('/')
-  result.fa = result.gyoker
+func ujCsomopont(b byte) *Csomopont {
+	return &Csomopont{
+		betu:     b,
+		balNulla: nil,
+		jobbEgy:  nil,
+	}
+}
 
-proc `<<`(bf: LZWBinFa, b: char) =
-  if b == '0':
-    if bf.fa.balNulla == nil:
-      bf.fa.balNulla = ujCsomopont('0')
-      bf.fa = bf.gyoker
-    else:
-      bf.fa = bf.fa.balNulla
-  else:
-    if bf.fa.jobbEgy == nil:
-      bf.fa.jobbEgy = ujCsomopont('1')
-      bf.fa = bf.gyoker
-    else:
-      bf.fa = bf.fa.jobbEgy
 
-proc rmelyseg(bf: LZWBinFa, elem: Csomopont) =
-  if elem != nil:
-    inc bf.melyseg
-    if bf.melyseg > bf.maxMelyseg:
-      bf.maxMelyseg = bf.melyseg
-    bf.rmelyseg(elem.jobbEgy)
-    bf.rmelyseg(elem.balNulla)
-    dec bf.melyseg
+type LZWBinFa struct {
+	gyoker       *Csomopont
+	fa           *Csomopont 
+	melyseg      int
+	maxMelyseg   int
+	atlagosszeg  int
+	atlagdb      int
+	szorasosszeg float64
+	atlag        float64
+	szoras       float64
+}
 
-proc getMelyseg(bf: LZWBinFa): int =
-  bf.melyseg = 0
-  bf.maxMelyseg = 0
-  bf.rmelyseg(bf.gyoker)
-  return bf.maxMelyseg - 1
 
-proc ratlag(bf: LZWBinFa, elem: Csomopont) =
-  if elem != nil:
-    inc bf.melyseg
-    bf.ratlag(elem.jobbEgy)
-    bf.ratlag(elem.balNulla)
-    dec bf.melyseg
-    if elem.jobbEgy == nil and elem.balNulla == nil:
-      inc bf.atlagdb
-      bf.atlagosszeg += bf.melyseg
+func ujLZWBinFa() *LZWBinFa {
+	gy := ujCsomopont('/')
+	return &LZWBinFa{
+		gyoker: gy,
+		fa:     gy, 
+	}
+}
 
-proc getAtlag(bf: LZWBinFa): float =
-  bf.melyseg = 0
-  bf.atlagosszeg = 0
-  bf.atlagdb = 0
-  bf.ratlag(bf.gyoker)
-  if bf.atlagdb > 0:
-    bf.atlag = bf.atlagosszeg.float / bf.atlagdb.float
-  return bf.atlag
 
-proc rszoras(bf: LZWBinFa, elem: Csomopont) =
-  if elem != nil:
-    inc bf.melyseg
-    bf.rszoras(elem.jobbEgy)
-    bf.rszoras(elem.balNulla)
-    dec bf.melyseg
-    if elem.jobbEgy == nil and elem.balNulla == nil:
-      inc bf.atlagdb
-      bf.szorasosszeg += pow(bf.melyseg.float - bf.atlag, 2)
+func (bf *LZWBinFa) Push(b byte) {
+	if b == '0' {
+		if bf.fa.balNulla == nil { 
+			bf.fa.balNulla = ujCsomopont('0') 
+			bf.fa = bf.gyoker              
+		} else {
+			bf.fa = bf.fa.balNulla 
+		}
+	} else {
+		if bf.fa.jobbEgy == nil {
+			bf.fa.jobbEgy = ujCsomopont('1')
+			bf.fa = bf.gyoker
+		} else {
+			bf.fa = bf.fa.jobbEgy
+		}
+	}
+}
 
-proc getSzoras(bf: LZWBinFa): float =
-  bf.atlag = bf.getAtlag()
-  bf.szorasosszeg = 0.0
-  bf.melyseg = 0
-  bf.atlagdb = 0
-  bf.rszoras(bf.gyoker)
-  if bf.atlagdb - 1 > 0:
-    bf.szoras = sqrt(bf.szorasosszeg / (bf.atlagdb - 1).float)
-  else:
-    bf.szoras = sqrt(bf.szorasosszeg)
-  return bf.szoras
 
-proc rkiir(bf: LZWBinFa, elem: Csomopont, fs: FileStream) =
-  if elem != nil:
-    inc bf.melyseg
-    bf.rkiir(elem.jobbEgy, fs)
-    fs.write(repeat("---", bf.melyseg) & elem.betu & "(" & $(bf.melyseg - 1) & ")\n")
-    bf.rkiir(elem.balNulla, fs)
-    dec bf.melyseg
+func (bf *LZWBinFa) Kiir(file *os.File) {
+	bf.melyseg = 0
+	bf.rkiir(bf.gyoker, file)
+}
 
-proc kiir(bf: LZWBinFa, fs: FileStream) =
-  bf.melyseg = 0
-  bf.rkiir(bf.gyoker, fs)
+func (bf *LZWBinFa) rkiir(elem *Csomopont, file *os.File) {
+	if elem != nil {
+		bf.melyseg++
+		bf.rkiir(elem.jobbEgy, file)
+		
 
-proc main() =
-  if paramCount() != 3 or paramStr(2) != "-o":
-    echo "Usage: lzwtree in_file -o out_file"
-    quit(-1)
+		indent := strings.Repeat("---", bf.melyseg)
+		fmt.Fprintf(file, "%s%c(%d)\n", indent, elem.betu, bf.melyseg-1)
+		
+		bf.rkiir(elem.balNulla, file)
+		bf.melyseg--
+	}
+}
 
-  let inFile = paramStr(1)
-  let outFile = paramStr(3)
-  
-  var beFile = newFileStream(inFile, fmRead)
-  if beFile == nil:
-    echo inFile, " nem letezik..."
-    quit(-3)
+func (bf *LZWBinFa) GetMelyseg() int {
+	bf.melyseg = 0
+	bf.maxMelyseg = 0
+	bf.rmelyseg(bf.gyoker)
+	return bf.maxMelyseg - 1
+}
 
-  var kiFile = newFileStream(outFile, fmWrite)
-  var bf = ujLZWBinFa()
-  var b: uint8
+func (bf *LZWBinFa) rmelyseg(elem *Csomopont) {
+	if elem != nil {
+		bf.melyseg++
+		if bf.melyseg > bf.maxMelyseg {
+			bf.maxMelyseg = bf.melyseg
+		}
+		bf.rmelyseg(elem.jobbEgy)
+		bf.rmelyseg(elem.balNulla)
+		bf.melyseg--
+	}
+}
 
-  while beFile.readData(addr b, 1) == 1:
-    if b == 0x0a: break
+func (bf *LZWBinFa) GetAtlag() float64 {
+	bf.melyseg = 0
+	bf.atlagosszeg = 0
+	bf.atlagdb = 0
+	bf.ratlag(bf.gyoker)
+	
+	if bf.atlagdb > 0 {
+		bf.atlag = float64(bf.atlagosszeg) / float64(bf.atlagdb)
+	}
+	return bf.atlag
+}
 
-  var kommentben = false
-  while beFile.readData(addr b, 1) == 1:
-    if b == 0x3e: # '>'
-      kommentben = true
-      continue
-    if b == 0x0a: # újsor
-      kommentben = false
-      continue
-    if kommentben: continue
-    if b == 0x4e: # 'N'
-      continue
+func (bf *LZWBinFa) ratlag(elem *Csomopont) {
+	if elem != nil {
+		bf.melyseg++
+		bf.ratlag(elem.jobbEgy)
+		bf.ratlag(elem.balNulla)
+		bf.melyseg--
+		if elem.jobbEgy == nil && elem.balNulla == nil {
+			bf.atlagdb++
+			bf.atlagosszeg += bf.melyseg
+		}
+	}
+}
 
-    # Bit léptetés
-    for i in 0..7:
-      if (b and 0x80) != 0:
-        bf << '1'
-      else:
-        bf << '0'
-      b = b shl 1
+func (bf *LZWBinFa) GetSzoras() float64 {
+	bf.atlag = bf.GetAtlag()
+	bf.szorasosszeg = 0.0
+	bf.melyseg = 0
+	bf.atlagdb = 0
+	bf.rszoras(bf.gyoker)
 
-  bf.kiir(kiFile)
-  kiFile.write("depth = ", bf.getMelyseg(), "\n")
-  kiFile.write("mean = ", bf.getAtlag(), "\n")
-  kiFile.write("var = ", bf.getSzoras(), "\n")
+	if bf.atlagdb-1 > 0 {
+		bf.szoras = math.Sqrt(bf.szorasosszeg / float64(bf.atlagdb-1))
+	} else {
+		bf.szoras = math.Sqrt(bf.szorasosszeg)
+	}
+	return bf.szoras
+}
 
-  beFile.close()
-  kiFile.close()
+func (bf *LZWBinFa) rszoras(elem *Csomopont) {
+	if elem != nil {
+		bf.melyseg++
+		bf.rszoras(elem.jobbEgy)
+		bf.rszoras(elem.balNulla)
+		bf.melyseg--
+		if elem.jobbEgy == nil && elem.balNulla == nil {
+			bf.atlagdb++
+			diff := float64(bf.melyseg) - bf.atlag
+			bf.szorasosszeg += diff * diff
+		}
+	}
+}
 
-main()
+
+func main() {
+	if len(os.Args) != 4 || os.Args[2] != "-o" {
+		fmt.Println("Usage: go run lzwtree.go in_file -o out_file")
+		os.Exit(-1)
+	}
+
+	inFile := os.Args[1]
+	outFile := os.Args[3]
+
+	beFile, err := os.Open(inFile)
+	if err != nil {
+		fmt.Println(inFile, "nem letezik...")
+		os.Exit(-3)
+	}
+	defer beFile.Close()
+
+	kiFile, err := os.Create(outFile)
+	if err != nil {
+		fmt.Println("Hiba a kimeneti fajl letrehozasakor.")
+		os.Exit(-4)
+	}
+	defer kiFile.Close()
+
+	binFa := ujLZWBinFa()
+	reader := bufio.NewReader(beFile)
+
+
+	for {
+		b, err := reader.ReadByte()
+		if err != nil || b == 0x0a {
+			break
+		}
+	}
+
+	kommentben := false
+
+
+	for {
+		b, err := reader.ReadByte()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			break
+		}
+
+		if b == 0x3e { 
+			kommentben = true
+			continue
+		}
+		if b == 0x0a { 
+			kommentben = false
+			continue
+		}
+		if kommentben {
+			continue
+		}
+		if b == 0x4e { 
+			continue
+		}
+
+		for i := 0; i < 8; i++ {
+			if (b & 0x80) != 0 {
+				binFa.Push('1')
+			} else {
+				binFa.Push('0')
+			}
+			b <<= 1
+		}
+	}
+
+	binFa.Kiir(kiFile)
+	fmt.Fprintf(kiFile, "depth = %d\n", binFa.GetMelyseg())
+	fmt.Fprintf(kiFile, "mean = %f\n", binFa.GetAtlag())
+	fmt.Fprintf(kiFile, "var = %f\n", binFa.GetSzoras())
+}
