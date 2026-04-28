@@ -1,0 +1,47 @@
+
+01
+Fogalomfelismerés — Kódrészlet → Karakter párosítás
+
+Minden kódrészlethez írd be a megfelelő fogalmat (és karakternevet ha emlékszel)!
+Kódrészlet / leírás		|		Fogalom / Karakter
+\x -> x * 2 	→	Lambda Lali
+f . g  (pont operátor) 	→	Függvényösszetétel Fanni
+add 5  (csak egy param, visszaad fnv-t) 	→	Curry Csaba
+map f xs, filter p xs 	→	Higher-Order Hugó
+foldl (+) 0 [1,2,3] 	→	Fold Frida
+f [] = 0    f (x:xs) = ... 	→	Mintaillesztő Miska	
+take 10 [1..]  (végtelen lista) 	→	Lusta László
+Ugyanarra a bemenetre mindig ugyanaz az eredmény 	→	Tiszta Tivadar
+A kifejezés értéke nem függ helyétől a kódban 	→	Hivatkozási Hanna
+Az érték, amiből már nem lehet tovább redukálni 	→	Normál Forma Norbert
+
+02
+Redukciós lépések — Kövesd Réka munkáját!
+
+a) Végezd el a β-redukciókat lépésről lépésre, amíg el nem érsz a normál formáig!
+(\x -> x + x) 5 -- 1. lépés (β): x = 5 -- 2. lépés: 5 + 5 -- Normál forma: 10
+
+b) Mi a normál forma? Vagy nincs?
+(a) 2 + 3 * 4 → normál forma: 14 (b) map (*2) [1,2] → normál forma: [2, 4] (c) let x = x in x → normál forma: Nincs normál formája (indok: A kifejezés valójában egy végtelen rekurzió (végtelen ciklus), ami folyamatosan önmagára hivatkozik, így sosem lehet leredukálni egy végső értékre)
+03
+Tail-rekurzió vs sima rekurzió — melyik melyik?
+
+Jelöld meg: TAIL vagy NEM-TAIL? Ha nem tail, alakítsd át akkumulátorral!
+-- A: szorzat [] = 1 szorzat (x:xs) = x * szorzat xs -- Tail? NEM TAIL -- B: szorzatT [] acc = acc szorzatT (x:xs) acc = szorzatT xs (x * acc) -- Tail? TAIL -- C: alakítsd át tail-recursive-vá! osszeg [] = 0 osszeg (x:xs) = x + osszeg xs -- Tail-recursive verzió: osszegT osszegT [] acc = acc osszegT (x:xs) acc = osszegT xs (acc + x)
+04
+Curry Csaba és függvényösszetétel — töltsd ki!
+
+a) Curry: mi lesz az eredmény?
+add x y = x + y add3 = add 3 -- típusa: Int -> Int add3 7 -- → 10 map (add 10) [1,2,3] -- → [11,12,13]
+
+b) Függvényösszetétel: mi lesz a definíció és az eredmény?
+duplaPlusz1 = (+1) . (*2) duplaPlusz1 4 -- lépések: 4 *2 = 8 , +1 = 8 + 1 → eredmény: 9 -- Írj egy függvényt, ami: (1) megszorozza 3-mal, (2) kivon belőle 1-et, (3) négyzetre emeli kombinalt = (*3) . (\x -> x - 1) . (^2) kombinalt 5 -- → 196
+05
+Lusta László vs Mohó Mónika — mikor melyik?
+
+Minden esethez írd: LUSTA kezeli, MOHÓ lefagy/hibázik, vagy MINDKETTŐ kezeli?
+Szituáció		LUSTA / MOHÓ / MINDKETTŐ
+take 5 [1..] — végtelen lista első 5 eleme 	→	LUSTA
+sum [1..100] — véges lista összege 	→	MINDKETTŐ
+Fibonacci sorozat végtelen listája 	→	LUSTA
+Ha egy függvény argumentumát soha nem használjuk fel 	→	LUSTA
